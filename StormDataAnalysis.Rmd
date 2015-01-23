@@ -1,0 +1,156 @@
+---
+title: "Severe Weather influence on humans and property"
+author: "Aleksandra Andic Villepique"
+date: "January 22, 2015"
+output:
+  html_document:
+    toc: yes
+---
+
+## Reproducible Research Class Project 2 ##
+
+##Abstract##
+
+The analysis concluded that Tornado's are the most damaging severe weather event. During the observed period, tornados caused 5636 deaths, 91407 injuries, and resulted in $3215850.41K of property damage.  
+For the crops, the most damaging weather event was hail, resulting in $581597.51K. 
+Any mitigation action should be subjected to the detailed analysis of all factors contributing to the causalities and damages. Only the recommendation for the best course of action can be made.
+
+
+#Introduction#
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+
+#Data Analysis Methods#
+
+The data for this assignment come in the form of a comma-separated-value file compressed via the bzip2 algorithm to reduce its size. (https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2)  
+The dataset is accompanied with the documentation:
+
+- National Weather Service Storm Data Documentation (https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)
+- National Climatic Data Center Storm Events FAQ (https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)
+
+The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database, there are fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
+
+The variable in dataset that describes the weather events is full of spelling mistakes and rather poetic descriptions of the weather. There is no standardized vocabulary used in these observations, nor data collection was conducted in the way that minimizes a variability in terminology. Thus, this problem needed to be addressed. 
+
+The following code snippet illustrates how the issue is addressed in this analysis.
+
+```{r}
+SD1<-read.csv("repdata-data-StormData.csv")
+
+event<-as.character(SD$EVTYPE)
+
+#fixing the levels that are simply mess
+w1<-grepl("Tornado", event)
+w2<-grepl("TORNADO", event)
+w3<-grepl("TORNDAO", event)
+
+w<-w1 | w2 | w3
+
+event[w]<-"Tornado"
+```
+
+After repeated procedure that required careful evaluation of the values, the weather categories were reduced to 27 different values. The file with corrected values was saved as separate data frame. This resulting data  were used in future processing.
+
+```{r}
+load("repdata_data_stormdata.Rda")
+```
+
+The values of fatalities, injuries, property, and crop damage were summed across the dataset, using the following code:
+
+```{r}
+death<-aggregate(FATALITIES~EVTYPE, SD, sum)
+injury<-aggregate(INJURIES~EVTYPE, SD, sum)
+propDMG<-aggregate(PROPDMG~EVTYPE,SD,sum)
+croDMG<-aggregate(CROPDMG~EVTYPE,SD,sum)
+```
+
+#Results#
+
+Several weather events caused high casualties, as presented in the following figure.  
+
+```{r plot, echo=FALSE}
+par(mfrow=c(2,1))
+
+with(death, plot(EVTYPE,FATALITIES,main="Total Fatalities per weather event in US",pch=20))
+with(injury, plot(EVTYPE,INJURIES,main="Total Injuries per weather event in US",pch=20))
+
+```
+
+
+The events that caused maximum fatalities and injuries were obtained with following code:
+
+```{r}
+EventDeath<-death$EVTYPE[which.max(death$FATALITIES)]
+MaxDeath<-max(death$FATALITIES)
+
+EventInjury<-injury$EVTYPE[which.max(injury$INJURIES)]
+MaxInjury<-max(injury$INJURIES)
+```
+
+Event causing the maximum fatalities is `r EventDeath`. The same event `r EventInjury` causes the maximum injuries, as well. The total number of fatalities caused by `r EventDeath` is `r MaxDeath`; while total number of injuries caused by `r EventInjury` is `r MaxInjury`. 
+
+
+The events that caused maximum economic damage are shown in the following figure.
+
+```{r plot1, echo=FALSE}
+par(mfrow=c(2,1))
+
+with(propDMG, plot(EVTYPE,PROPDMG,main="Total property damage per weather event in US",pch=20))
+with(croDMG, plot(EVTYPE,CROPDMG,main="Total crop damage per weather event in US",pch=20))
+print ("Fig.2. Economic damage caused by weather events.")
+
+```
+
+With the following code,
+
+```{r}
+PropertyDamage<-propDMG$EVTYPE[which.max(propDMG$PROPDMG)]
+MaxPropertyDamage<-max(propDMG$PROPDMG)
+
+CropDamage<-croDMG$EVTYPE[which.max(croDMG$CROPDMG)]
+MaxCropDamage<-max(croDMG$CROPDMG)
+```
+
+
+was found that maximal property damage was caused by event `r PropertyDamage` causing total $`r MaxPropertyDamage`K of loss. Maximal crop damage was caused by `r CropDamage` causing total $`r MaxCropDamage`K of loss. 
+
+#Discussion#
+
+If we repeat the same analysis on the dataset where weather event types are not corrected for misspellings the we get following:
+
+```{r}
+
+death1<-aggregate(FATALITIES~EVTYPE, SD1, sum)
+injury1<-aggregate(INJURIES~EVTYPE, SD1, sum)
+propDMG1<-aggregate(PROPDMG~EVTYPE,SD1,sum)
+croDMG1<-aggregate(CROPDMG~EVTYPE,SD1,sum)
+
+EventDeath1<-death1$EVTYPE[which.max(death1$FATALITIES)]
+MaxDeath1<-max(death1$FATALITIES)
+
+EventInjury1<-injury1$EVTYPE[which.max(injury1$INJURIES)]
+MaxInjury1<-max(injury1$INJURIES)
+
+PropertyDamage1<-propDMG1$EVTYPE[which.max(propDMG1$PROPDMG)]
+MaxPropertyDamage1<-max(propDMG1$PROPDMG)
+
+CropDamage1<-croDMG1$EVTYPE[which.max(croDMG1$CROPDMG)]
+MaxCropDamage1<-max(croDMG1$CROPDMG)
+
+```
+
+Event causing the maximum fatalities is `r EventDeath1`. The same event `r EventInjury1` causes the maximum injuries, as well. The total number of fatalities caused by `r EventDeath1` is `r MaxDeath1`; while total number of injuries caused by `r EventInjury1` is `r MaxInjury1`.  
+While, maximal property damage was caused by event `r PropertyDamage1` causing total $`r MaxPropertyDamage1`K of loss. Maximal crop damage was caused by `r CropDamage1` causing total $`r MaxCropDamage1`K of loss.   
+
+Although results seem the same, there a potential error needs to be discussed. Events were classified subjectively, no standardized vocabulary was followed. During the procedure of cleaning up the weather events values, again, the subjective approach was applied in determining which events should be joined. This might lead to a potential overestimation of the values corresponding to the certain weather events.  
+
+However, the fact that raw dataset produces similar results, that vary just in value of the victims/damage, indicates that process applied during cleaning up the weather event values, although subjective, did not negatively influenced analysis. 
+
+
+#Conclusion#
+
+The most property damage and casualties are caused by Tornados during the last 61 year in US. Considering the fact that tornados usually hit  the poorest parts of the country, the mitigation of damages and casualties will be complex.    
+The maximal crop damage is caused by hail, which can be mitigated by appropriate preventive action of dispersing the clouds. However, the careful analysis of cost/benefit of such actions needs to be implemented. 
+
